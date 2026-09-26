@@ -5,7 +5,7 @@
 ## 引擎
 
 - 引擎目录：`d:\WorkGit\UnrealEngine`（UE 5.8.3 源码构建版）
-- `Demo_AS.uproject` 中的 `EngineAssociation` 为 GUID 关联，若失效可在注册表 `HKCU\SOFTWARE\Epic Games\Unreal Engine\Builds` 重建，或右键 uproject 重新切换引擎版本。
+- Angelscript 主插件目录：`D:\WorkGit\UnrealEngine\Engine\Plugins\Angelscript`（见 `Angelscript.uplugin`）
 - 引擎带 Angelscript 支持（含 `AngelscriptGAS` 插件）。
 
 ## Script 目录（Angelscript 代码）
