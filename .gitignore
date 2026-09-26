@@ -15,3 +15,7 @@ Saved
 *.xcworkspace
 /.idea/
 /.vsconfig
+
+# Angelscript engine-generated bind database (refreshed by any commandlet run)
+Script/Binds.Cache
+Script/Binds.Cache.Headers

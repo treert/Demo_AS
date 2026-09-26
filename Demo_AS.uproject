@@ -38,6 +38,13 @@
 		{
 			"Name": "AngelscriptEnhancedInput",
 			"Enabled": true
+		},
+		{
+			"Name": "AngelscriptTypeExporter",
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
 		}
 	]
 }

@@ -1,0 +1,25 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "0.1",
+	"FriendlyName": "Angelscript Type Exporter",
+	"Description": "Exports all C++ bound Angelscript types (engine reflection database) to .d.as declaration files, consumed by my-angel-script-lsp for offline hover/goto/references.",
+	"Category": "Scripting",
+	"CreatedBy": "",
+	"CanContainContent": false,
+	"IsBetaVersion": true,
+	"Installed": false,
+	"Plugins": [
+		{
+			"Name": "Angelscript",
+			"Enabled": true
+		}
+	],
+	"Modules": [
+		{
+			"Name": "AngelscriptTypeExporter",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	]
+}
