@@ -215,6 +215,14 @@ namespace
 		if (ScriptFunction->traits.GetTrait(asTRAIT_NOT_CALLABLE))
 			TagLines.Add(Indent + TEXT("// @notCallable"));
 
+		// Property-accessor trait. Mirrors the debug database encoding: bound
+		// functions are implicitly property accessors (engine config
+		// bAllowImplicitPropertyAccessors = true), so the flag is only written
+		// when false. The LSP pairs Get*/Set* methods into virtual properties
+		// at index time (x.BaseValue <=> GetBaseValue()/SetBaseValue()).
+		if (!ScriptFunction->IsProperty())
+			TagLines.Add(Indent + TEXT("// @notProperty"));
+
 		if (ScriptFunction->determinesOutputTypeArgumentIndex != -1)
 		{
 			int32 OutputTypeIndex = ScriptFunction->determinesOutputTypeArgumentIndex;

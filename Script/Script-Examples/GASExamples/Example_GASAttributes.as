@@ -26,6 +26,7 @@ class UExample_GASAttributes : UAngelscriptAttributeSet
         // Two good options for initializating attributes are by using data tables or gameplay effects. See the general GAS docs for more info on this.
         Health.Initialize(100.0f);
         Speed.Initialize(1.0f);
+        Speed.CurrentValue = 1.0f;
     }
 
     // To get attribute replication to properly work, GAS needs to know when replication has occurred, so we need to forward the data like this.
