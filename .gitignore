@@ -9,6 +9,9 @@ Saved
 *.opendb
 *.sdf
 *.sln
+*.slnx
 *.suo
 *.xcodeproj
 *.xcworkspace
+/.idea/
+/.vsconfig
