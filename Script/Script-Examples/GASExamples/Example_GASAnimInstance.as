@@ -19,11 +19,11 @@ class UExample_GASAnimInstance : UAnimInstance
 	void OnAttributeSetRegistered(UAngelscriptAttributeSet NewAttributeSet)
 	{
 		// In here, we can register our attribute callback, and also hook up the callback itself.
-		if(NewAttributeSet.IsA(UExample_GASAttributes::StaticClass()))
+		if(NewAttributeSet.IsA(UExample_GASAttributes))
 		{
 			// Here we use the auxillary namespace to avoid having magic strings in our code as much as possible.
 			AAngelscriptGASCharacter Character = Cast<AAngelscriptGASCharacter>(OwningActor);
-			Character.AbilitySystem.GetAndRegisterCallbackForAttribute(UExample_GASAttributes::StaticClass(), UExample_GASAttributes::SpeedName, CachedSpeed);
+			Character.AbilitySystem.GetAndRegisterCallbackForAttribute(UExample_GASAttributes, UExample_GASAttributes::SpeedName, CachedSpeed);
 			Character.AbilitySystem.OnAttributeChanged.AddUFunction(this, n"OnAttributeChanged");
 		}
 	}

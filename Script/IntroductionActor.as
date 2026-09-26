@@ -39,6 +39,8 @@ class AIntroductionActor : AActor
     UFUNCTION(BlueprintOverride)
     void Tick(float DeltaSeconds)
     {
+        auto location = this.GetActorTransform().GetLocation();
+        Print("Actor location: " + location);
         if (bCountdownActive)
         {
             // Count down the timer 
