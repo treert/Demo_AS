@@ -25,6 +25,7 @@
 
 #if WITH_EDITOR
 static const FName NAME_AS_ScriptKeywords(TEXT("ScriptKeywords"));
+static const FName NAME_AS_ScriptMixin(TEXT("ScriptMixin"));
 static const TArray<FName> NAMES_AS_InformedMeta = {
 	TEXT("DelegateBindType"),
 	TEXT("DelegateFunctionParam"),
@@ -79,7 +80,8 @@ namespace
 			Out.Add(Indent + TEXT("// ") + Line);
 	}
 
-	FString MakeGroupFileName(const FString& Group)
+	/** Preferred (short) group file name: last path component, "::" flattened to dots. */
+	FString MakeGroupShortName(const FString& Group)
 	{
 		// Package names look like "/Script/Engine" - keep the last path component.
 		FString Short = Group;
@@ -87,25 +89,46 @@ namespace
 		if (Short.FindLastChar('/', SlashIdx))
 			Short = Short.RightChop(SlashIdx + 1);
 		// Namespace names may contain "::" - flatten to dots for the file name.
-		return Short.Replace(TEXT("::"), TEXT(".")) + TEXT(".d.as");
+		return Short.Replace(TEXT("::"), TEXT("."));
 	}
 
-	/** Resolves which output group (engine module / namespace) a UClass-backed type belongs to. */
+	/** Fully-qualified group file name ("/Script/EnhancedInput" -> "Script.EnhancedInput"). */
+	FString MakeGroupFlatName(const FString& Group)
+	{
+		FString Flat = Group.Replace(TEXT("/"), TEXT(".")).Replace(TEXT("::"), TEXT("."));
+		while (Flat.StartsWith(TEXT(".")))
+			Flat = Flat.RightChop(1);
+		return Flat;
+	}
+
+	/** Resolves which output group (engine module / namespace) a type belongs to. */
 	FString ResolveClassGroup(asITypeInfo* ScriptType, const FString& TypeName)
 	{
 #if WITH_EDITOR
-		UClass* ClassPtr = nullptr;
+		UObject* FieldPtr = nullptr;
 
 		auto ASType = FAngelscriptType::GetByAngelscriptTypeName(TypeName);
 		if (ASType.IsValid())
-			ClassPtr = ASType->GetClass(FAngelscriptTypeUsage::DefaultUsage);
-
-		if (ClassPtr == nullptr && (ScriptType->GetFlags() & asOBJ_REF) != 0)
-			ClassPtr = (UClass*)ScriptType->GetUserData();
-
-		if (UStruct* Struct = Cast<UStruct>(ClassPtr))
 		{
-			if (UPackage* Package = Struct->GetPackage())
+			// Value types (UScriptStruct-backed) only implement GetUnrealStruct,
+			// object types only implement GetClass - try both so structs land in
+			// their owning module's file instead of the "Core" fallback.
+			FieldPtr = ASType->GetUnrealStruct(FAngelscriptTypeUsage::DefaultUsage);
+			if (FieldPtr == nullptr)
+				FieldPtr = ASType->GetClass(FAngelscriptTypeUsage::DefaultUsage);
+		}
+
+		if (FieldPtr == nullptr)
+		{
+			// Classes and enums carry their UClass/UEnum in the type user data.
+			const asDWORD Flags = ScriptType->GetFlags();
+			if ((Flags & (asOBJ_REF | asOBJ_ENUM)) != 0)
+				FieldPtr = (UObject*)ScriptType->GetUserData();
+		}
+
+		if (FieldPtr != nullptr)
+		{
+			if (UPackage* Package = FieldPtr->GetPackage())
 				return Package->GetName();
 		}
 #endif
@@ -512,6 +535,21 @@ FTypeExportResult FTypeDeclarationExporter::ExportAll()
 			}
 		}
 
+#if WITH_EDITOR
+		// ScriptMixin libraries (e.g. UEnhancedInputLocalPlayerSubsystemScriptMixinLibrary)
+		// are pure carriers: their static functions get bound as methods onto their
+		// mixin target types, so in the angelscript engine they are empty shells.
+		// The target types carry the functions - don't export the empty shells.
+		if (Body.Num() == 0 && (ScriptType->GetFlags() & asOBJ_REF) != 0)
+		{
+			if (UClass* LibClass = Cast<UClass>((UObject*)ScriptType->GetUserData()))
+			{
+				if (LibClass->HasMetaData(NAME_AS_ScriptMixin))
+					continue;
+			}
+		}
+#endif
+
 		// ---------------------------------------------------------------
 		// Type header: template parameters, inheritance, doc, keywords
 		// ---------------------------------------------------------------
@@ -758,6 +796,37 @@ FTypeExportResult FTypeDeclarationExporter::ExportAll()
 	{
 		Groups.KeySort([](const FString& A, const FString& B) { return A < B; });
 
+		// Package groups ("/Script/EnhancedInput") and namespace groups ("EnhancedInput")
+		// both flatten to the same file name with the short-name scheme, and writing
+		// both would silently overwrite one with the other. Assign unique file names
+		// up front: keep the short name while unambiguous, otherwise fall back to the
+		// fully-qualified group name ("/Script/EnhancedInput" -> "Script.EnhancedInput.d.as",
+		// while the namespace keeps "EnhancedInput.d.as").
+		TMap<FString, FString> FileNamesByGroup;
+		{
+			TMap<FString, int32> ShortNameUseCounts;
+			for (auto& Pair : Groups)
+				ShortNameUseCounts.FindOrAdd(MakeGroupShortName(Pair.Key)) += 1;
+
+			TSet<FString> UsedFileNames;
+			for (auto& Pair : Groups)
+			{
+				const FString& Group = Pair.Key;
+				const FString BaseName =
+					ShortNameUseCounts[MakeGroupShortName(Group)] == 1
+					? MakeGroupShortName(Group)
+					: MakeGroupFlatName(Group);
+
+				FString FileName = BaseName + TEXT(".d.as");
+				int32 Suffix = 2;
+				while (UsedFileNames.Contains(FileName))
+					FileName = FString::Printf(TEXT("%s_%d.d.as"), *BaseName, Suffix++);
+				UsedFileNames.Add(FileName);
+
+				FileNamesByGroup.Add(Group, FileName);
+			}
+		}
+
 		TArray<FString> ManifestLines;
 		ManifestLines.Add(FString::Printf(TEXT("AS_TYPE_CACHE v%d"), AS_DECL_CACHE_FORMAT_VERSION));
 		ManifestLines.Add(FString::Printf(TEXT("engine_version=%s"), *FEngineVersion::Current().ToString()));
@@ -770,7 +839,7 @@ FTypeExportResult FTypeDeclarationExporter::ExportAll()
 		TArray<FString> FileNames;
 		for (auto& Pair : Groups)
 		{
-			const FString FileName = MakeGroupFileName(Pair.Key);
+			const FString FileName = FileNamesByGroup.FindChecked(Pair.Key);
 			const FString FilePath = OutputDir / FileName;
 
 			TArray<FString> FileLines;
