@@ -28,12 +28,15 @@
 
 ```powershell
 # 推荐：Commandlet（无头，秒级完成）
+# -as-force-preprocess-editor-code 必须带：commandlet 下 bUseEditorScripts 默认为 false，
+# editor 模块里的类型（如 UScriptActorMenuExtension）不会被绑定进 AS 引擎，导出会缺失；
+# 带 flag 后 editor 类型、CPF_EditorOnly 属性、#if EDITOR 脚本块全部生效
 & "d:\WorkGit\UnrealEngine\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" `
     "d:\WorkGit\UEProjs\Demo_AS\Demo_AS.uproject" `
-    -run=AngelscriptTypeExporter -unattended -nopause -nosplash
+    -run=AngelscriptTypeExporter -unattended -nopause -nosplash -as-force-preprocess-editor-code
 ```
 
-或编辑器内 Tools 菜单 → "Export Angelscript Type Declarations (.d.as)"。
+或编辑器内 Tools 菜单 → "Export Angelscript Type Declarations (.d.as)"（编辑器非 commandlet，`bUseEditorScripts` 天然为 true，无需 flag）。
 
 ### 输出
 
