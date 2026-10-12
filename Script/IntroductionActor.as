@@ -40,7 +40,7 @@ class AIntroductionActor : AActor
     void Tick(float DeltaSeconds)
     {
         auto location = this.GetActorTransform().GetLocation();
-        Print("Actor location: " + location);
+        // Print("Actor location: " + location);
         if (bCountdownActive)
         {
             // Count down the timer 

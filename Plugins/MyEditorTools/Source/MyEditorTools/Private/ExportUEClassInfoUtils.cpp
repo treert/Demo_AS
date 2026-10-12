@@ -244,10 +244,35 @@ namespace
 		Yaml.AddComment(TEXT("auto export UCLASS UENUM USTRUCT..."));
 
 		{
-			auto func = [](const UObject* It){ return It->IsNative() && !It->IsEditorOnly(); };
+			// AS FIX 引擎补丁字段：仅 Angelscript 生成器置位；enum 无标志，靠包区分
+			auto IsScriptType = [](const UObject* It) -> bool
+			{
+				if (const UClass* Cls = Cast<UClass>(It))
+				{
+					return Cls->bIsScriptClass;
+				}
+				if (const UScriptStruct* Struct = Cast<UScriptStruct>(It))
+				{
+					return Struct->bIsScriptStruct;
+				}
+				return It->GetPackage()->GetName().StartsWith(TEXT("/Script/Angelscript"));
+			};
+			auto func = [IsScriptType](const UObject* It)
+			{
+				if (It->IsEditorOnly())
+				{
+					return false;
+				}
+				return It->IsNative() || IsScriptType(It);
+			};
 			Enums = Enums.FilterByPredicate(func);
 			Structs = Structs.FilterByPredicate(func);
 			Classes = Classes.FilterByPredicate(func);
+			// 排序，保证多次导出结果顺序稳定
+			auto SortByName = [](const UObject& A, const UObject& B){ return A.GetFullName() < B.GetFullName(); };
+			Enums.Sort(SortByName);
+			Structs.Sort(SortByName);
+			Classes.Sort(SortByName);
 			if(Enums.Num() + Structs.Num() + Classes.Num() == 0)
 			{
 				return;
