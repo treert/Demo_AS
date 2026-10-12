@@ -19,12 +19,20 @@ lua_structs:list[LuaClass] = []
 
 class NameInfo:
 	def __init__(self, fullname:str):
+		# FullName 格式: "ScriptStruct /Engine/TedsDynamicColumns/EditorDataStorageTableDynamicTag_Alerts chain.EditorDataStorageTableDynamicTag::Alerts chain"
+		# 即: "类型 路径/中间前缀.Package.Name"，其中 Name 本身可能含空格和 "::"
 		self.fullname = fullname
-		segs = fullname.split(" ")
+		# 只按第一个空格切分(maxsplit=1)，把开头的类型(ScriptStruct/Class/Enum...)和后面的路径分开。
+		# 注意：不能直接 split(" ")，因为名字部分可能含空格(如 "Alerts chain")，会被切碎导致后面 segs[1] 越界。
+		segs = fullname.split(" ", 1)
 		self.type = segs[0]
 		fullname = segs[1]
+		# 去掉路径前缀：截取最后一个 "/" 之后的部分。
+		# 剩下 "Package.Name"，例如 "EditorDataStorageTableDynamicTag_Alerts chain.EditorDataStorageTableDynamicTag::Alerts chain"
 		fullname = fullname[fullname.rindex("/")+1:]
-		segs = fullname.split(".")
+		# 只按第一个 "." 切分(maxsplit=1)，分出 Package 和 Name。
+		# 同理不能无限切分，防止 Name 中本身含 "." 时被截断。
+		segs = fullname.split(".", 1)
 
 		self.package = segs[0]
 		self.name = segs[1]
