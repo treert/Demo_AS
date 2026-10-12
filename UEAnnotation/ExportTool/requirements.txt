@@ -1,0 +1,3 @@
+# GenerateUEAnnotationForLua.py 依赖
+# 安装: python -m pip install -r requirements.txt
+PyYAML>=5.4
