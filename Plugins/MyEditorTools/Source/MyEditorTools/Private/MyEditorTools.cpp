@@ -44,6 +44,11 @@ void FMyEditorToolsModule::ShutdownModule()
 
 	UToolMenus::UnregisterOwner(this);
 
+	if (UToolMenus* ToolMenus = UToolMenus::TryGet())
+	{
+		ToolMenus->RemoveMenu("LevelEditor.MainMenu.MyTools");
+	}
+
 	FMyEditorToolsStyle::Shutdown();
 
 	FMyEditorToolsCommands::Unregister();
@@ -71,14 +76,24 @@ void FMyEditorToolsModule::RegisterMenus()
 	FToolMenuOwnerScoped OwnerScoped(this);
 
 	{
-		UToolMenu* Menu = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu.Window");
+		// 在主菜单栏添加 MyTools 顶级入口（引擎 Build/Select 菜单同款写法）
+		UToolMenu* MenuBar = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu");
 		{
-			FToolMenuSection& Section = Menu->FindOrAddSection("WindowLayout");
-			Section.AddMenuEntryWithCommandList(FMyEditorToolsCommands::Get().PluginAction, PluginCommands);
+			FToolMenuSection& Section = MenuBar->FindOrAddSection(NAME_None);
+			FToolMenuEntry& MyToolsEntry = Section.AddSubMenu(
+				"MyTools",
+				LOCTEXT("MyToolsMenu", "MyTools"),
+				LOCTEXT("MyToolsMenu_ToolTip", "My Editor Tools"),
+				FNewToolMenuChoice()
+			);
+			MyToolsEntry.InsertPosition = FToolMenuInsert("Help", EToolMenuInsertType::After);
 		}
 
+		// MyTools 子菜单内容
+		UToolMenu* Menu = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu.MyTools");
 		{
 			FToolMenuSection& Section = Menu->FindOrAddSection("MyEditorTools");
+			Section.AddMenuEntryWithCommandList(FMyEditorToolsCommands::Get().PluginAction, PluginCommands);
 			Section.AddMenuEntryWithCommandList(FMyEditorToolsCommands::Get().ExportUEClassInfo, PluginCommands);
 		}
 	}
