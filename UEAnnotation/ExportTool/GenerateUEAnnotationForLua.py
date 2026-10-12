@@ -45,7 +45,7 @@ def gen_tip_comment(tip:str,content:str,line_tail:str = "@", indent:str="") -> s
 
 class LuaEnum:
 	def __init__(self, yaml):
-		self.fields:dict[str, (int,str)] = {}
+		self.fields:dict[str, tuple[int, str]] = {}
 		fullname:str = yaml["FullName"]
 		self.nameinfo = NameInfo(fullname)
 		EnumValues = yaml["EnumValues"]
@@ -124,7 +124,7 @@ class LuaClass:
 
 		def __init__(self, yaml, cls:LuaClass):
 			self.params:list[LuaClass.Function.Param] = []
-			self.return_type:LuaClass.Function.Param = None
+			self.return_type:LuaClass.Function.Param | None = None
 
 			self.cls = cls
 			self.name = yaml["longname"].split(".")[-1]
@@ -180,7 +180,6 @@ class LuaClass:
 
 
 	def __init__(self, yaml):
-		self.nameinfo:NameInfo = None
 		self.cppname:str = ""
 		self.parent:str = ""
 		self.tip:str = ""
