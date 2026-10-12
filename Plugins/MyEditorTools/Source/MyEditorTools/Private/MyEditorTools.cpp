@@ -3,6 +3,7 @@
 #include "MyEditorTools.h"
 #include "MyEditorToolsStyle.h"
 #include "MyEditorToolsCommands.h"
+#include "ExportUEClassInfoUtils.h"
 #include "Misc/MessageDialog.h"
 #include "ToolMenus.h"
 
@@ -24,6 +25,11 @@ void FMyEditorToolsModule::StartupModule()
 	PluginCommands->MapAction(
 		FMyEditorToolsCommands::Get().PluginAction,
 		FExecuteAction::CreateRaw(this, &FMyEditorToolsModule::PluginButtonClicked),
+		FCanExecuteAction());
+
+	PluginCommands->MapAction(
+		FMyEditorToolsCommands::Get().ExportUEClassInfo,
+		FExecuteAction::CreateRaw(this, &FMyEditorToolsModule::ExportUEClassInfoClicked),
 		FCanExecuteAction());
 
 	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FMyEditorToolsModule::RegisterMenus));
@@ -54,6 +60,11 @@ void FMyEditorToolsModule::PluginButtonClicked()
 	FMessageDialog::Open(EAppMsgType::Ok, DialogText);
 }
 
+void FMyEditorToolsModule::ExportUEClassInfoClicked()
+{
+	FExportUEClassInfoUtils::Export();
+}
+
 void FMyEditorToolsModule::RegisterMenus()
 {
 	// Owner will be used for cleanup in call to UToolMenus::UnregisterOwner
@@ -64,6 +75,11 @@ void FMyEditorToolsModule::RegisterMenus()
 		{
 			FToolMenuSection& Section = Menu->FindOrAddSection("WindowLayout");
 			Section.AddMenuEntryWithCommandList(FMyEditorToolsCommands::Get().PluginAction, PluginCommands);
+		}
+
+		{
+			FToolMenuSection& Section = Menu->FindOrAddSection("MyEditorTools");
+			Section.AddMenuEntryWithCommandList(FMyEditorToolsCommands::Get().ExportUEClassInfo, PluginCommands);
 		}
 	}
 

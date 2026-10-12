@@ -319,7 +319,7 @@ def main():
 			normal_enum_strs.append(it.get_lua_comment())
 
 	# WriteLinesToFile(R"Civ\Content\Lua\Generated\AutoGenEnum.lua", export_enum_strs)
-	WriteLinesToFile(R"LuaComment\ue-lua-enum.lua", normal_enum_strs)
+	WriteLinesToFile(R"LuaComment\auto_gen\ue-lua-enum.lua", normal_enum_strs)
 	# print(f"enum done, cost {watcher.get_one_cost():.2f}s")
 
 	print(f"Total cost {watcher.get_total():.2f}s")

@@ -17,6 +17,9 @@ public:
 	
 	/** This function will be bound to Command. */
 	void PluginButtonClicked();
+
+	/** 导出 UE 类信息（YAML），绑定到菜单按钮 */
+	void ExportUEClassInfoClicked();
 	
 private:
 
